@@ -1,25 +1,35 @@
-This is the [assistant-ui](https://github.com/assistant-ui/assistant-ui) starter project.
+# UI (assistant-ui) do NARA
 
-## Getting Started
+Esta UI conversa com o backend OpenAI-compatível do projeto via `AGENT_API_URL`.
 
-First, add your OpenAI API key to `.env.local` file:
+## Execução local
 
+1. Crie `ui/.env.local` com:
+
+```env
+AGENT_API_URL=http://localhost:18080/v1
+AGENT_API_KEY=sk-local-nao-usado
 ```
-OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-```
 
-Then, run the development server:
+2. Instale dependências e rode:
 
 ```bash
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build Docker (compatível com versão de Node configurável)
+
+O Dockerfile da UI aceita `NODE_VERSION` como argumento de build.
+
+```bash
+docker build --build-arg NODE_VERSION=22-bookworm-slim -t nara-ui .
+```
+
+No `docker compose` (`app/docker-compose.yml`), a versão pode ser definida via:
+
+```env
+UI_NODE_VERSION=22-bookworm-slim
+```

@@ -59,15 +59,16 @@ entao o clone do Git e os anexos ficam persistidos fora do container.
 Se o clone remoto falhar, a ingestao continua com os arquivos de `DOCS_LOCAL_ATTACH_DIR`.
 
 ## Passo 3, front-end estilo Claude (assistant-ui) fora do Compose
-O assistant-ui (https://www.assistant-ui.com/) e a UI mais parecida com o claude.ai.
-Detalhes em `frontend/README.md`. Em resumo:
+O repositório já inclui a pasta `ui/` pronta. Para rodar fora do compose:
 ```bash
-npx assistant-ui@latest create ui
-cd ui && npm install @ai-sdk/openai
-# substitua ui/app/api/chat/route.ts pelo frontend/route.ts e crie ui/.env.local
+cd ../ui
+cp .env.example .env.local
+npm ci
 npm run dev               # http://localhost:3000
 ```
-O `route.ts` aponta o chat para o `agent-api` via a variavel `AGENT_API_URL`.
+O `route.ts` aponta o chat para o `agent-api` via `AGENT_API_URL`.
+No build Docker da UI, a versão de Node é configurável por `UI_NODE_VERSION`
+(`NODE_VERSION` no Dockerfile), para facilitar compatibilidade entre ambientes.
 
 ## Alternativa, Gradio (UI simples, sem Node)
 `python app.py` sobe uma interface Gradio em `:7860` usando o mesmo nucleo. Outras

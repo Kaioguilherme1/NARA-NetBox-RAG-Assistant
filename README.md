@@ -143,6 +143,12 @@ Na raiz do projeto, execute:
 docker compose up --build
 ```
 
+Se precisar fixar a versão do Node da UI no build Docker:
+
+```bash
+UI_NODE_VERSION=22-bookworm-slim docker compose up --build
+```
+
 Para executar em background:
 
 ```bash
