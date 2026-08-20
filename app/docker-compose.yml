@@ -1,0 +1,40 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: rag
+    # sem publicar porta no host: o agent-api acessa pela rede interna (db:5432)
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # Backend: o agente exposto como API compativel com OpenAI
+  agent-api:
+    build: .
+    command: uvicorn server:app --host 0.0.0.0 --port 8000
+    env_file: .env
+    environment:
+      DOCS_LOCAL_DIR: /app/documentos_local/repo
+      DOCS_LOCAL_ATTACH_DIR: /app/documentos_local/anexos
+    depends_on:
+      - db
+    volumes:
+      - ./documentos_local:/app/documentos_local
+    ports:
+      - "18080:8000"
+
+  # Front-end Next.js (assistant-ui) integrado no mesmo compose.
+  ui:
+    build:
+      context: ../ui
+      dockerfile: Dockerfile
+    environment:
+      AGENT_API_URL: http://agent-api:8000/v1
+      AGENT_API_KEY: sk-local-nao-usado
+    depends_on:
+      - agent-api
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:

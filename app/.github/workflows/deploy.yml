@@ -1,0 +1,46 @@
+name: Deploy
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}/agente-viagem
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.ref_name }}
+            ${{ env.IMAGE }}:latest
+
+  deploy:
+    needs: build-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-kubectl@v4
+      - name: Configurar kubeconfig
+        run: echo "${{ secrets.KUBECONFIG }}" > kubeconfig
+      - name: Aplicar manifests e atualizar a imagem
+        env:
+          KUBECONFIG: kubeconfig
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/postgres.yaml -f k8s/app.yaml -f k8s/frontend.yaml -f k8s/ingress.yaml
+          kubectl -n agente-viagem set image deployment/agent-api app=${{ env.IMAGE }}:${{ github.ref_name }}
+          kubectl -n agente-viagem rollout status deployment/agent-api

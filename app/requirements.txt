@@ -1,0 +1,11 @@
+deepagents
+langchain
+langchain-openai
+langgraph
+langgraph-checkpoint-postgres
+psycopg[binary]
+langchain-text-splitters
+gradio
+fastapi
+uvicorn[standard]
+python-dotenv

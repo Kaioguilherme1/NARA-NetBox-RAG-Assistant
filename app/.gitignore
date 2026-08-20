@@ -1,0 +1,7 @@
+.env
+kubeconfig
+__pycache__/
+*.pyc
+venv/
+*.zip
+.langgraph_api/

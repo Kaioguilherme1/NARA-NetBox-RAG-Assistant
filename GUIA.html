@@ -1,0 +1,1355 @@
+<title>NARA — guia do projeto NetBox RAG Assistant</title>
+<style>
+  :root {
+    --paper:        #F1F4F3;
+    --surface:      #FAFBFA;
+    --surface-2:    #E8EDEB;
+    --ink:          #172029;
+    --ink-soft:     #4E5C66;
+    --ink-faint:    #7A868E;
+    --rule:         #D3DAD8;
+    --rule-soft:    #E2E7E5;
+    --accent:       #1D4E6B;
+    --accent-soft:  #E3EDF2;
+    --amber:        #9A5B18;
+    --amber-soft:   #F6EBDC;
+    --green:        #2F6349;
+    --red:          #8E332B;
+    --code-bg:      #10181F;
+    --code-ink:     #DCE5EA;
+    --code-dim:     #7E8E99;
+    --shadow:       0 1px 2px rgba(23,32,41,.05), 0 6px 20px rgba(23,32,41,.05);
+
+    --f-display: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --f-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --f-mono: ui-monospace, "Cascadia Code", "Cascadia Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:       #0E151B;
+      --surface:     #151E26;
+      --surface-2:   #1C272F;
+      --ink:         #E3EAEE;
+      --ink-soft:    #A3B0B9;
+      --ink-faint:   #7C8A94;
+      --rule:        #2A3841;
+      --rule-soft:   #212D35;
+      --accent:      #82B8D4;
+      --accent-soft: #17303E;
+      --amber:       #D6A063;
+      --amber-soft:  #2E2418;
+      --green:       #7DB99A;
+      --red:         #DE8B81;
+      --code-bg:     #0A1015;
+      --code-ink:    #D3DEE4;
+      --code-dim:    #6E7E89;
+      --shadow:      0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:       #0E151B;
+    --surface:     #151E26;
+    --surface-2:   #1C272F;
+    --ink:         #E3EAEE;
+    --ink-soft:    #A3B0B9;
+    --ink-faint:   #7C8A94;
+    --rule:        #2A3841;
+    --rule-soft:   #212D35;
+    --accent:      #82B8D4;
+    --accent-soft: #17303E;
+    --amber:       #D6A063;
+    --amber-soft:  #2E2418;
+    --green:       #7DB99A;
+    --red:         #DE8B81;
+    --code-bg:     #0A1015;
+    --code-ink:    #D3DEE4;
+    --code-dim:    #6E7E89;
+    --shadow:      0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  @media (min-width: 1000px) {
+    .wrap {
+      grid-template-columns: 210px minmax(0, 1fr);
+      align-items: start;
+      gap: 56px;
+    }
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead {
+    grid-column: 1 / -1;
+    padding: 56px 0 32px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 8px;
+  }
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+  .masthead h1 {
+    font-family: var(--f-display);
+    font-size: clamp(34px, 6vw, 54px);
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    margin: 0 0 16px;
+    text-wrap: balance;
+    font-weight: 400;
+  }
+  .standfirst {
+    font-size: 18px;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0;
+  }
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin-top: 24px;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+  .meta-row span b { color: var(--ink-soft); font-weight: 600; }
+
+  /* ---------- nav ---------- */
+  nav.toc {
+    font-size: 13.5px;
+    line-height: 1.45;
+  }
+  @media (min-width: 1000px) {
+    nav.toc { position: sticky; top: 24px; max-height: calc(100vh - 48px); overflow-y: auto; }
+  }
+  nav.toc p {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 12px;
+  }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  nav.toc a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    border-left: 2px solid var(--rule);
+    padding-left: 12px;
+    display: block;
+  }
+  nav.toc a:hover, nav.toc a:focus-visible { color: var(--accent); border-left-color: var(--accent); }
+
+  main { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+
+  section { padding: 28px 0 8px; }
+  section + section { border-top: 1px solid var(--rule-soft); }
+
+  h2 {
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: 30px;
+    line-height: 1.15;
+    letter-spacing: -.015em;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  h3 {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    margin: 32px 0 10px;
+  }
+  h4 {
+    font-family: var(--f-mono);
+    font-size: 13px;
+    font-weight: 600;
+    margin: 24px 0 8px;
+    color: var(--accent);
+  }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  ul, ol.body { margin: 0 0 16px; padding-left: 22px; max-width: 68ch; }
+  li { margin-bottom: 7px; }
+  strong { font-weight: 650; }
+  a { color: var(--accent); }
+
+  .lede { font-size: 17px; color: var(--ink-soft); max-width: 66ch; margin-bottom: 20px; }
+
+  code {
+    font-family: var(--f-mono);
+    font-size: .875em;
+    background: var(--surface-2);
+    padding: 1.5px 5px;
+    border-radius: 3px;
+  }
+
+  pre {
+    background: var(--code-bg);
+    color: var(--code-ink);
+    font-family: var(--f-mono);
+    font-size: 13px;
+    line-height: 1.55;
+    padding: 16px 18px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 0 0 18px;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; }
+  pre .c { color: var(--code-dim); }
+
+  /* ---------- steps ---------- */
+  .steps { counter-reset: step; display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+  .step {
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    gap: 4px 14px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .step::before {
+    counter-increment: step;
+    content: counter(step);
+    font-family: var(--f-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    width: 26px; height: 26px;
+    display: grid; place-items: center;
+    margin-top: 2px;
+  }
+  .step h3 { margin: 2px 0 8px; font-size: 16px; }
+  .step > div > :last-child { margin-bottom: 0; }
+
+  /* ---------- file card ---------- */
+  .file {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 20px 22px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow);
+  }
+  .file > :last-child { margin-bottom: 0; }
+  .file-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .file-head h3 {
+    font-family: var(--f-mono);
+    font-size: 15px;
+    margin: 0;
+    font-weight: 650;
+  }
+  .chip {
+    font-family: var(--f-mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .chip.lines { background: none; color: var(--ink-faint); padding-left: 0; }
+
+  /* ---------- callouts ---------- */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 14px 18px;
+    border-radius: 0 5px 5px 0;
+    margin: 0 0 18px;
+  }
+  .callout > :last-child { margin-bottom: 0; }
+  .callout .label {
+    display: block;
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .callout.trap { border-left-color: var(--amber); background: var(--amber-soft); }
+  .callout.trap .label { color: var(--amber); }
+
+  /* ---------- tables ---------- */
+  .tw { overflow-x: auto; margin: 0 0 20px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 520px; }
+  th, td { text-align: left; padding: 9px 14px 9px 0; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  th {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+    border-bottom-color: var(--rule);
+  }
+  td code { white-space: nowrap; }
+
+  /* ---------- Q&A ---------- */
+  .qa { display: flex; flex-direction: column; gap: 2px; }
+  details {
+    border-bottom: 1px solid var(--rule-soft);
+    padding: 4px 0;
+  }
+  details summary {
+    cursor: pointer;
+    padding: 11px 0 11px 30px;
+    font-weight: 600;
+    font-size: 15.5px;
+    position: relative;
+    list-style: none;
+    text-wrap: balance;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before {
+    content: "?";
+    position: absolute;
+    left: 6px;
+    font-family: var(--f-mono);
+    color: var(--accent);
+    font-weight: 700;
+  }
+  details summary:hover { color: var(--accent); }
+  details[open] summary { color: var(--accent); }
+  details .answer { padding: 2px 0 14px 30px; }
+  details .answer > :last-child { margin-bottom: 0; }
+
+  /* ---------- traps list ---------- */
+  .trap-item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 14px;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .sev {
+    font-family: var(--f-mono);
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 3px;
+    height: fit-content;
+    white-space: nowrap;
+    border: 1px solid currentColor;
+  }
+  .sev.now { color: var(--red); }
+  .sev.soon { color: var(--amber); }
+  .sev.note { color: var(--ink-faint); }
+  .trap-item h4 { margin: 0 0 4px; color: var(--ink); font-family: var(--f-body); font-size: 15px; font-weight: 650; }
+  .trap-item p { margin: 0 0 8px; font-size: 14.5px; }
+  .trap-item > div > :last-child { margin-bottom: 0; }
+  .fixline { font-family: var(--f-mono); font-size: 12.5px; color: var(--ink-soft); }
+  .fixline b { color: var(--green); font-weight: 600; }
+
+  /* ---------- figures ---------- */
+  figure { margin: 4px 0 24px; }
+  figure svg { max-width: 100%; height: auto; display: block; color: var(--ink-soft); }
+  figcaption {
+    font-size: 13px;
+    color: var(--ink-faint);
+    margin-top: 10px;
+    max-width: 66ch;
+    line-height: 1.5;
+  }
+  .figframe {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 22px 20px;
+    overflow-x: auto;
+  }
+
+  .svg-accent { color: var(--accent); }
+
+  footer {
+    grid-column: 1 / -1;
+    border-top: 2px solid var(--ink);
+    padding-top: 20px;
+    margin-top: 30px;
+    font-size: 13.5px;
+    color: var(--ink-faint);
+    max-width: 68ch;
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Projeto exemplo · guia de leitura</p>
+    <h1>NARA, por dentro</h1>
+    <p class="standfirst">O NARA é um assistente interno para NetBox baseado em DeepAgent + RAG em pgvector. Ele consulta documentação institucional, responde com evidência documentada e oferece uma API compatível com OpenAI consumida por uma UI web. Este guia descreve a arquitetura, o fluxo de ingestão e os pontos de extensão do projeto.</p>
+    <div class="meta-row">
+      <span><b>deepagents</b> 0.7.5</span>
+      <span><b>langchain</b> 1.3.15</span>
+      <span><b>langgraph</b> 1.2.11</span>
+      <span><b>fastapi</b> 0.141.1</span>
+      <span><b>Next.js</b> 16.2</span>
+      <span><b>modelo</b> gpt-5.4 · text-embedding-3-small</span>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <p>Neste guia</p>
+    <ol>
+      <li><a href="#rodar">Antes de tudo: rodar</a></li>
+      <li><a href="#projeto-final">O projeto final</a></li>
+      <li><a href="#ideia">A ideia central</a></li>
+      <li><a href="#nucleo">agent_core.py</a></li>
+      <li><a href="#gratis">O que vem de graça</a></li>
+      <li><a href="#server">server.py</a></li>
+      <li><a href="#pergunta">O caminho de uma pergunta</a></li>
+      <li><a href="#memoria">As três memórias</a></li>
+      <li><a href="#gradio">app.py (Gradio)</a></li>
+      <li><a href="#ui">A UI</a></li>
+      <li><a href="#infra">Infra e CI/CD</a></li>
+      <li><a href="#notebook">O notebook</a></li>
+      <li><a href="#experimentos">Experimentos</a></li>
+      <li><a href="#receita">Do exemplo ao seu projeto</a></li>
+      <li><a href="#duvidas">Perguntas frequentes</a></li>
+      <li><a href="#armadilhas">O que costuma quebrar</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- ============ 0 ============ -->
+    <section id="rodar">
+      <h2>Antes de tudo: colocar no ar</h2>
+      <p class="lede">Ler o código com ele rodando ao lado vale o dobro. São dois comandos e um arquivo de configuração.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div>
+            <h3>Configure suas credenciais</h3>
+            <p>Na pasta <code>app/</code>, copie o exemplo e preencha a chave e o endpoint:</p>
+<pre><code>cd app
+cp .env.example .env</code></pre>
+            <p>As duas variáveis que importam são <code>OPENAI_API_KEY</code> e <code>OPENAI_BASE_URL</code>. O projeto usa Azure AI Foundry, cujo endpoint termina em <code>/openai/v1/</code> e fala o protocolo da OpenAI — por isso nenhuma linha de código muda para trocar de provedor.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div>
+            <h3>Suba o backend</h3>
+<pre><code>docker compose up --build -d</code></pre>
+            <p>Isso levanta dois containers: o Postgres com a extensão pgvector e o <code>agent-api</code>. Na primeira subida, o app lê os PDFs de <code>app/documentos/</code>, corta em pedaços, gera os embeddings e grava no banco.</p>
+            <p>O sinal de que deu certo aparece no log:</p>
+<pre><code>docker compose logs agent-api
+
+<span class="c">agent-api-1  | Ingeridos 180 chunks de 3 documento(s).</span>
+<span class="c">agent-api-1  | INFO:     Uvicorn running on http://0.0.0.0:8000</span></code></pre>
+            <p>E o teste rápido:</p>
+<pre><code>curl http://localhost:18080/v1/models
+<span class="c">{"object":"list","data":[{"id":"nara",...}]}</span></code></pre>
+          </div>
+        </div>
+
+        <div class="step">
+          <div>
+            <h3>Suba a interface</h3>
+<pre><code>cd ../ui
+npm install
+npm run dev</code></pre>
+            <p>Abra o endereço que o Next.js imprimir no terminal — normalmente <code>http://localhost:3000</code>, mas ele troca de porta sozinho se ela estiver ocupada, então confie no log e não no que você espera.</p>
+            <p>A UI descobre o backend pelo arquivo <code>ui/.env.local</code>:</p>
+<pre><code>AGENT_API_URL=http://localhost:18080/v1
+AGENT_API_KEY=sk-local-nao-usado</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout trap">
+        <span class="label">A porta engana</span>
+        <p>O <code>README.md</code> e o <code>frontend/.env.local.example</code> dizem que o backend fica em <code>localhost:8000</code>. O <code>docker-compose.yml</code> publica <strong><code>18080</code></strong> no seu computador (mapeado para a 8000 <em>dentro</em> do container). Se o chat não responder, é quase sempre isto: confira o <code>AGENT_API_URL</code>.</p>
+      </div>
+
+      <p>Prefere não instalar Node? Existe um atalho: <code>python app.py</code> sobe uma interface Gradio em <code>:7860</code> usando exatamente o mesmo agente. Veja a <a href="#gradio">seção do Gradio</a>.</p>
+    </section>
+
+    <!-- ============ 0.5 ============ -->
+    <section id="projeto-final">
+      <h2>O projeto final, e o que este exemplo já resolve</h2>
+      <p class="lede">Este projeto é um ponto de partida, não um gabarito. Ele cobre a maior parte dos requisitos da entrega — e deixa dois de fora de propósito, que são justamente onde você vai programar.</p>
+
+      <div class="tw">
+        <table>
+          <thead>
+            <tr><th>Requisito da entrega</th><th>Neste exemplo</th><th>O que você faz</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Agente com <code>create_deep_agent</code></td>
+              <td>Pronto — <code>agent_core.py</code>, final do arquivo</td>
+              <td>Reaproveitar a montagem</td>
+            </tr>
+            <tr>
+              <td><strong>Mínimo 2 tools customizadas</strong></td>
+              <td>Tem <strong>uma</strong>: a <code>tool_rag</code></td>
+              <td><strong>Escrever a segunda</strong> — <a href="#receita">receita, passo 6</a></td>
+            </tr>
+            <tr>
+              <td><strong>Mínimo 1 sub-agent</strong></td>
+              <td><strong>Nenhum</strong></td>
+              <td><strong>Declarar em <code>subagents=[...]</code></strong> — <a href="#receita">passo 7</a></td>
+            </tr>
+            <tr>
+              <td>RAG com Postgres + pgvector local</td>
+              <td>Pronto — ingestão e retrieval funcionando</td>
+              <td>Trocar os PDFs pelos seus</td>
+            </tr>
+            <tr>
+              <td>Pipeline completo: ingestão + retrieval</td>
+              <td>Pronto — <code>preparar_base()</code> e <code>tool_rag()</code></td>
+              <td>Ajustar chunking e filtros ao seu corpus</td>
+            </tr>
+            <tr>
+              <td><code>docker-compose.yml</code> com pgvector</td>
+              <td>Pronto</td>
+              <td>Nada, se mantiver a estrutura</td>
+            </tr>
+            <tr>
+              <td>README: setup <code>.env</code> + <code>docker compose up</code></td>
+              <td>Existe, mas <strong>com a porta errada</strong></td>
+              <td>Reescrever para o seu projeto, com a porta certa</td>
+            </tr>
+            <tr>
+              <td>README: 3 perguntas-teste com resposta esperada</td>
+              <td>Não tem</td>
+              <td>Escrever — use a <a href="#experimentos">seção Experimentos</a> como molde</td>
+            </tr>
+            <tr>
+              <td>README: caso de uso e limitações conhecidas</td>
+              <td>Não tem</td>
+              <td>Escrever — a seção <a href="#armadilhas">O que costuma quebrar</a> mostra o nível de honestidade esperado</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <span class="label">Leia com esse filtro</span>
+        <p>Ao percorrer o código daqui em diante, preste atenção especial em <strong>como a <code>tool_rag</code> é declarada</strong> (é o molde da sua segunda tool) e em <strong>como o agente é montado</strong> no fim do <code>agent_core.py</code> (é onde o subagente entra). O resto você aproveita quase inteiro.</p>
+      </div>
+
+      <p>Sobre as limitações conhecidas que o README pede: elas não são um demérito da entrega — são sinal de que você entendeu o que construiu. Um projeto que declara "a comparação entre dois documentos sai enviesada porque o filtro para no primeiro match" mostra mais domínio do que um que promete perfeição.</p>
+    </section>
+
+    <!-- ============ 1 ============ -->
+    <section id="ideia">
+      <h2>A ideia central</h2>
+      <p class="lede">Se você guardar uma só frase deste guia, guarde esta: <strong>o agente se disfarça de OpenAI.</strong></p>
+
+      <p>O <code>server.py</code> implementa dois endpoints que a API da OpenAI tem — <code>GET /v1/models</code> e <code>POST /v1/chat/completions</code>. Do lado de fora, qualquer cliente compatível com OpenAI acha que está conversando com um modelo chamado <code>nara</code>. Do lado de dentro, o DeepAgent decide quando buscar na base documental do NetBox.</p>
+
+      <p>Essa escolha é o que dá liberdade ao projeto: a mesma API serve o assistant-ui, o Open WebUI, o LibreChat, um script com <code>curl</code> ou um notebook. Trocar a interface não toca em uma linha do agente.</p>
+
+      <figure>
+        <div class="figframe">
+          <svg viewBox="0 0 800 300" role="img" aria-label="A UI fala com o backend pelo protocolo da OpenAI; atrás dessa fronteira, o DeepAgent consulta o pgvector e o Azure Foundry.">
+            <defs>
+              <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+              </marker>
+            </defs>
+
+            <line x1="330" y1="20" x2="330" y2="285" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 5" opacity=".45"/>
+            <text x="322" y="34" font-size="11" font-family="ui-monospace, monospace" text-anchor="end" opacity=".75">a UI enxerga até aqui</text>
+
+            <rect x="20" y="90" width="150" height="58" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="95" y="114" font-size="13" text-anchor="middle" font-weight="600">assistant-ui</text>
+            <text x="95" y="132" font-size="11" text-anchor="middle" opacity=".7">Next.js</text>
+
+            <rect x="196" y="90" width="112" height="58" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="252" y="114" font-size="12" text-anchor="middle" font-family="ui-monospace, monospace">route.ts</text>
+            <text x="252" y="132" font-size="11" text-anchor="middle" opacity=".7">AI SDK</text>
+
+            <line x1="170" y1="119" x2="192" y2="119" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+
+            <g class="svg-accent">
+              <rect x="380" y="82" width="170" height="74" rx="5" fill="none" stroke="currentColor" stroke-width="2"/>
+              <text x="465" y="106" font-size="13" text-anchor="middle" font-weight="600">server.py</text>
+              <text x="465" y="124" font-size="11" text-anchor="middle" font-family="ui-monospace, monospace">/v1/chat/completions</text>
+              <text x="465" y="142" font-size="11" text-anchor="middle" opacity=".8">FastAPI · :18080</text>
+            </g>
+            <line x1="308" y1="119" x2="374" y2="119" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+            <text x="341" y="110" font-size="10.5" text-anchor="middle" font-family="ui-monospace, monospace" opacity=".8">SSE</text>
+
+            <rect x="380" y="196" width="170" height="62" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="465" y="220" font-size="13" text-anchor="middle" font-weight="600">DeepAgent</text>
+            <text x="465" y="238" font-size="11" text-anchor="middle" opacity=".7">agent_core.py</text>
+            <line x1="465" y1="156" x2="465" y2="192" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+
+            <rect x="612" y="196" width="160" height="62" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="692" y="220" font-size="13" text-anchor="middle" font-weight="600">pgvector</text>
+            <text x="692" y="238" font-size="11" text-anchor="middle" opacity=".7">tabela chunks</text>
+            <line x1="550" y1="227" x2="606" y2="227" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+            <text x="578" y="218" font-size="10.5" text-anchor="middle" font-family="ui-monospace, monospace" opacity=".8">tool_rag</text>
+
+            <rect x="612" y="82" width="160" height="62" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="692" y="106" font-size="13" text-anchor="middle" font-weight="600">Azure Foundry</text>
+            <text x="692" y="124" font-size="11" text-anchor="middle" opacity=".7">gpt-5.4 · embeddings</text>
+            <line x1="550" y1="113" x2="606" y2="113" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+          </svg>
+        </div>
+        <figcaption>A linha tracejada é a fronteira do protocolo. À esquerda, qualquer cliente OpenAI serve. À direita, você troca o agente, o banco ou o modelo sem que a UI perceba.</figcaption>
+      </figure>
+
+      <p>O repositório tem três entradas para o <em>mesmo</em> núcleo: a API (<code>server.py</code>), uma UI Gradio (<code>app.py</code>) e o notebook do curso. Todas importam <code>agent_core.py</code>. É esse o padrão que vale copiar no seu projeto.</p>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section id="nucleo">
+      <h2>agent_core.py, o núcleo</h2>
+      <p class="lede">186 linhas que fazem tudo o que importa: configuração, ingestão, busca e montagem do agente. Entendendo este arquivo, você entendeu o projeto.</p>
+
+      <div class="file">
+        <div class="file-head">
+          <h3>Configuração</h3>
+          <span class="chip">linhas 20–36</span>
+        </div>
+        <p>Tudo que muda entre ambientes vem de variável de ambiente, com default para rodar local:</p>
+<pre><code>load_dotenv()
+DB_URI       = os.environ.get("DB_URI", "postgresql://...@localhost:5432/rag")
+MODELO_CHAT  = os.environ.get("MODELO_CHAT", "gpt-5.4")
+MODELO_EMBED = os.environ.get("MODELO_EMBED", "text-embedding-3-small")</code></pre>
+        <p>Repare que a chave da Azure não aparece no código: <code>OPENAI_API_KEY</code> e <code>OPENAI_BASE_URL</code> são lidas pelo próprio cliente da LangChain, direto do ambiente. É por isso que apontar para o Foundry em vez da OpenAI não exigiu mudança nenhuma de código — só de <code>.env</code>.</p>
+      </div>
+
+      <div class="file">
+        <div class="file-head">
+          <h3>SYSTEM_PROMPT</h3>
+          <span class="chip">linhas 26–34</span>
+        </div>
+        <p>O prompt é curto, mas cada frase faz um trabalho. Leia devagar e identifique as cinco partes:</p>
+        <ul>
+          <li><strong>Papel</strong> — "Você é NARA, assistente interno especializado em NetBox, técnico e objetivo."</li>
+          <li><strong>Gatilho da ferramenta</strong> — "Para QUALQUER pergunta sobre cartões, benefícios, seguro, cobertura ou assistência, SEMPRE chame a <code>tool_rag</code> ANTES de responder." Note o vocabulário: são as palavras que o usuário usaria, não o nome interno do documento.</li>
+          <li><strong>Ancoragem</strong> — "baseie-se apenas nos trechos retornados".</li>
+          <li><strong>Citação</strong> — o formato <code>[Fonte: ...]</code> chega dentro do texto da ferramenta, e o prompt manda listar as fontes no fim.</li>
+          <li><strong>Saída honesta</strong> — "se não estiver nos trechos, diga que não encontrou". É esta linha que produz o "não encontrei na base" em vez de invenção.</li>
+        </ul>
+        <div class="callout">
+          <span class="label">Por que isso importa</span>
+          <p>O prompt não descreve o que a ferramenta faz — quem descreve é a <em>docstring</em> dela. O prompt só diz <em>quando</em> usar e <em>como</em> se comportar com o resultado. Essa divisão de responsabilidade é o que evita prompt gigante, e é o erro mais comum de quem escreve a primeira ferramenta.</p>
+        </div>
+      </div>
+
+      <div class="file">
+        <div class="file-head">
+          <h3>conectar() e pg()</h3>
+          <span class="chip">linhas 39–57</span>
+        </div>
+        <p>Uma conexão global, criada sob demanda, com até 15 tentativas espaçadas de 3s — ou seja, <strong>45 segundos de tolerância</strong> esperando o Postgres subir. Isso existe porque no <code>docker compose</code> e no Kubernetes o banco e o app sobem juntos, e o app quase sempre ganha a corrida.</p>
+        <p><code>depends_on</code> no compose garante ordem de <em>início</em>, não que o Postgres esteja pronto para aceitar conexão. O retry cobre essa diferença — um detalhe que você vai querer copiar em qualquer app que suba junto com seu banco.</p>
+      </div>
+
+      <div class="file">
+        <div class="file-head">
+          <h3>preparar_base()</h3>
+          <span class="chip">linhas 60–97</span>
+          <span class="chip lines">ingestão</span>
+        </div>
+        <p>É o pipeline de RAG inteiro, em 35 linhas:</p>
+<pre><code><span class="c"># 1. extensão e tabela</span>
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE TABLE IF NOT EXISTS chunks (
+  id bigserial PRIMARY KEY, content text, source text, embedding vector(1536)
+);
+
+<span class="c"># 2. guarda de idempotência</span>
+SELECT count(*) FROM chunks;   <span class="c">→ se &gt; 0, retorna sem fazer nada</span>
+
+<span class="c"># 3. PDF → texto → chunks → vetores → INSERT</span>
+pymupdf.open(caminho)                         <span class="c"># texto de cada página</span>
+RecursiveCharacterTextSplitter(1000, 100)     <span class="c"># ~1000 chars, 100 de sobreposição</span>
+emb.embed_documents(pedacos)                  <span class="c"># 1 chamada por arquivo, em lote</span></code></pre>
+        <p>A coluna <code>source</code> guarda o nome do arquivo sem extensão, e é ela que vira o <code>[Fonte: ...]</code> na resposta. A sobreposição de 100 caracteres existe para que uma frase cortada no fim de um chunk reapareça inteira no começo do próximo.</p>
+        <div class="callout trap">
+          <span class="label">Isto vai te pegar</span>
+          <p>A guarda de idempotência é <code>count(*) &gt; 0</code>, não uma comparação de conteúdo. <strong>Trocar os PDFs e reiniciar não reingere nada</strong> — a base velha continua lá e o agente segue respondendo sobre os documentos antigos. Para trocar o corpus é preciso apagar o volume: <code>docker compose down -v</code>.</p>
+        </div>
+      </div>
+
+      <div class="file">
+        <div class="file-head">
+          <h3>tool_rag()</h3>
+          <span class="chip">linhas 100–154</span>
+          <span class="chip lines">a ferramenta</span>
+        </div>
+        <p>Aqui mora a parte mais importante para quem vai criar o próprio agente. Comece pela docstring, porque <strong>ela não é comentário — é interface</strong>:</p>
+<pre><code>def tool_rag(pergunta: str) -> str:
+    """Busca trechos na documentação do NetBox e padrões internos (pgvector)
+    para fundamentar a resposta. Use para perguntas sobre modelagem, operação,
+    Device Types, interfaces e documentação institucional. Cada trecho vem
+    marcado com [Fonte: ...] para você citar."""</code></pre>
+        <p>A LangChain converte a assinatura e a docstring no schema JSON que vai para o modelo. O nome do parâmetro, o type hint e esse texto são <em>tudo</em> o que o LLM sabe sobre a ferramenta na hora de decidir chamá-la. Docstring vaga produz agente que não busca — ou que busca sempre.</p>
+
+        <p>A busca em si tem duas pernas e um filtro:</p>
+        <div class="tw">
+          <table>
+            <thead>
+              <tr><th>Etapa</th><th>O que faz</th><th>SQL</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Filtro por cartão</td>
+                <td>Se a pergunta cita platinum/gold/standard, restringe ao documento certo</td>
+                <td><code>source ILIKE '%platinum%'</code></td>
+              </tr>
+              <tr>
+                <td>Perna 1 — semântica</td>
+                <td>Os 5 chunks mais próximos do vetor da pergunta</td>
+                <td><code>ORDER BY embedding &lt;=&gt; %s LIMIT 5</code></td>
+              </tr>
+              <tr>
+                <td>Perna 2 — lexical</td>
+                <td>Até 4 chunks que contenham as palavras da pergunta, ordenados por proximidade vetorial</td>
+                <td><code>WHERE content ILIKE ... LIMIT 4</code></td>
+              </tr>
+              <tr>
+                <td>Fusão</td>
+                <td>Dicionário por <code>id</code> — a perna semântica tem prioridade, a lexical só acrescenta o que faltou</td>
+                <td><code>resultados.setdefault(...)</code></td>
+              </tr>
+              <tr>
+                <td>Corte</td>
+                <td>No máximo 7 trechos, cada um prefixado com sua fonte</td>
+                <td><code>list(...)[:7]</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>O operador <code>&lt;=&gt;</code> do pgvector é distância de cosseno: quanto menor, mais parecido. Por isso o <code>ORDER BY</code> é crescente, sem <code>DESC</code>.</p>
+        <p>A perna lexical filtra palavras com 5 letras ou mais e descarta uma lista de <em>stopwords</em> do domínio (<code>qual</code>, <code>cartao</code>, <code>seguro</code>, <code>cobertura</code>…). A ideia é sobrar só o termo raro — "bagagem", "extravio", "franquia" — que é justamente onde a busca vetorial às vezes escorrega.</p>
+        <div class="callout">
+          <span class="label">Isso é busca híbrida?</span>
+          <p>É a versão didática dela. Busca híbrida de produção usa BM25 (ou <code>ts_vector</code>) para a perna lexical e funde os dois rankings com RRF, ponderando posições. Aqui a perna lexical é um <code>ILIKE</code> e a fusão é "quem chegou primeiro fica". Funciona bem no tamanho desta base e é legível numa leitura; não é o que você levaria para produção com milhões de chunks.</p>
+        </div>
+      </div>
+
+      <div class="file">
+        <div class="file-head">
+          <h3>construir_agente()</h3>
+          <span class="chip">linhas 157–185</span>
+          <span class="chip lines">montagem</span>
+        </div>
+        <p>Uma função, dois modos. Com <code>persistente=True</code> (usado pelo Gradio):</p>
+<pre><code>store       = PostgresStore(conectar());  store.setup()
+checkpointer = PostgresSaver(conectar()); checkpointer.setup()
+
+create_deep_agent(
+    model=ChatOpenAI(model=MODELO_CHAT, temperature=0),
+    tools=[tool_rag],
+    system_prompt=SYSTEM_PROMPT,
+    backend=CompositeBackend(
+        default=StateBackend(),
+        routes={"/memories/": StoreBackend(namespace=lambda ctx: ("memories",))},
+    ),
+    store=store, checkpointer=checkpointer,
+)</code></pre>
+        <p>O <code>CompositeBackend</code> é o filesystem virtual do agente, com um roteador de caminhos: qualquer arquivo que o agente escrever em <code>/memories/</code> vai para o Postgres e sobrevive ao restart; o resto vive no <code>StateBackend</code> e some no fim da conversa. É memória de longo prazo com granularidade de pasta.</p>
+        <p>Com <code>persistente=False</code> (usado pelo <code>server.py</code>), é uma linha só: <code>create_deep_agent(model, tools, system_prompt)</code>. Sem store, sem checkpointer, sem rota de memória — tudo efêmero.</p>
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section id="gratis">
+      <h2>O que o create_deep_agent te dá de graça</h2>
+      <p class="lede">O código declara <em>uma</em> ferramenta. O agente roda com <strong>dez</strong>.</p>
+      <p>Isso não está escrito em lugar nenhum do projeto — só aparece se você inspecionar o grafo compilado. Vale fazer você mesmo, com o backend rodando:</p>
+<pre><code>&gt;&gt;&gt; list(agente.nodes)
+['__start__', 'model', 'tools', 'PatchToolCallsMiddleware.before_agent']
+
+&gt;&gt;&gt; sorted(agente.nodes['tools'].bound.tools_by_name)
+['delete', 'edit_file', 'execute', 'glob', 'grep', 'ls',
+ 'read_file', 'task', 'tool_rag', 'write_file']</code></pre>
+      <p>Nove ferramentas vêm do <em>harness</em> do DeepAgents e uma é sua. Elas se dividem em dois grupos:</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Grupo</th><th>Ferramentas</th><th>Para que serve</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Filesystem virtual</td>
+              <td><code>ls</code> <code>read_file</code> <code>write_file</code> <code>edit_file</code> <code>glob</code> <code>grep</code> <code>delete</code></td>
+              <td>Rascunho do agente. Ele guarda resultados intermediários em "arquivos" em vez de carregar tudo no contexto. É onde entra a rota <code>/memories/</code>.</td>
+            </tr>
+            <tr>
+              <td>Orquestração</td>
+              <td><code>task</code> <code>execute</code></td>
+              <td><code>task</code> delega a um subagente com contexto isolado. É o mecanismo por trás de <code>subagents=[...]</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <span class="label">"Então esse agente pode apagar arquivos?"</span>
+        <p>Pode — mas do <strong>filesystem virtual</strong>, que neste modo vive só na memória da conversa. Não é o disco do container nem o seu computador. Vale saber disso antes de se assustar com a lista de ferramentas na primeira vez que ela aparecer num log.</p>
+      </div>
+      <p>A assinatura completa da função mostra por onde o projeto pode crescer sem trocar de framework:</p>
+<pre><code>create_deep_agent(
+    model, tools, *, system_prompt, middleware=(), subagents=None,
+    skills=None, memory=None, permissions=None, backend=None,
+    interrupt_on=None,      <span class="c"># human-in-the-loop: pausa antes de X</span>
+    response_format=None,   <span class="c"># saída estruturada (Pydantic)</span>
+    state_schema=None, context_schema=None,
+    checkpointer=None, store=None, name=None, cache=None,
+)</code></pre>
+      <p>Os quatro que mais vão te interessar: <code>subagents</code> (dividir trabalho), <code>interrupt_on</code> (aprovação humana antes de uma ação destrutiva), <code>permissions</code> (restringir o filesystem) e <code>response_format</code> (resposta em JSON validado).</p>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section id="server">
+      <h2>server.py, o disfarce</h2>
+      <p class="lede">83 linhas que traduzem o agente para o protocolo da OpenAI.</p>
+
+      <p>Três detalhes que merecem atenção:</p>
+
+      <h3>O agente é construído no import</h3>
+<pre><code>agente = construir_agente(persistente=False)   <span class="c"># nível de módulo</span></code></pre>
+      <p>Roda uma vez, no boot do processo — e como <code>construir_agente</code> chama <code>preparar_base()</code>, <strong>a ingestão acontece na subida do container</strong>, não na primeira pergunta. Bom: a primeira resposta não paga o custo. Ruim: se a ingestão falhar, o container não sobe. É por isso que a linha <code>Ingeridos 180 chunks</code> aparece no log antes de qualquer requisição.</p>
+
+      <h3>O histórico é peneirado</h3>
+<pre><code>def _historico(req_messages):
+    """Mantem apenas role + content textual (ignora conteudo multimodal)."""</code></pre>
+      <p>Só passam mensagens cujo <code>content</code> é <em>string</em> e cujo papel é system/user/assistant. Isso descarta silenciosamente anexos, imagens e blocos de conteúdo estruturado. Se você anexar um PDF na UI e nada acontecer, a explicação está nesta função.</p>
+
+      <h3>O SSE é montado à mão</h3>
+<pre><code>for token, _meta in agente.stream(mensagens, cfg, stream_mode="messages"):
+    if isinstance(token, AIMessageChunk) and token.content:
+        yield "data: " + json.dumps(pedaco) + "\n\n"
+...
+yield "data: [DONE]\n\n"</code></pre>
+      <p><code>stream_mode="messages"</code> entrega os tokens do LLM conforme saem. O <code>isinstance(token, AIMessageChunk)</code> filtra o que não é texto do assistente. Cada token vira um <code>chunk</code> no formato da OpenAI, e o <code>[DONE]</code> fecha o stream — é a convenção que todo cliente OpenAI espera.</p>
+      <div class="callout">
+        <span class="label">Guarde para depois</span>
+        <p>Esse filtro captura tokens de <em>qualquer</em> nó do grafo. Num agente com subagentes, o "pensamento" deles apareceria no stream do usuário. Aqui não acontece porque não há subagentes — mas é a primeira coisa a checar quando você adicionar <code>subagents=[...]</code> e o chat começar a mostrar texto estranho.</p>
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section id="pergunta">
+      <h2>O caminho de uma pergunta</h2>
+      <p class="lede">"Quanto o Platinum cobre de bagagem?" — o que acontece, em ordem.</p>
+
+      <figure>
+        <div class="figframe">
+          <svg viewBox="0 0 780 400" role="img" aria-label="Sequência: a UI envia a pergunta, o servidor chama o agente, o modelo decide chamar a ferramenta, a ferramenta consulta o pgvector, e a resposta volta em streaming.">
+            <defs>
+              <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+              </marker>
+            </defs>
+
+            <g font-size="11.5" text-anchor="middle" font-weight="600">
+              <text x="60" y="20">UI</text>
+              <text x="245" y="20">server.py</text>
+              <text x="430" y="20">modelo</text>
+              <text x="640" y="20">pgvector</text>
+            </g>
+            <g stroke="currentColor" stroke-width="1" opacity=".3">
+              <line x1="60" y1="30" x2="60" y2="380"/>
+              <line x1="245" y1="30" x2="245" y2="380"/>
+              <line x1="430" y1="30" x2="430" y2="380"/>
+              <line x1="640" y1="30" x2="640" y2="380"/>
+            </g>
+
+            <g font-size="11" font-family="ui-monospace, monospace">
+              <line x1="60" y1="60" x2="240" y2="60" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+              <text x="150" y="52" text-anchor="middle">POST /v1/chat/completions</text>
+
+              <line x1="245" y1="100" x2="425" y2="100" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+              <text x="335" y="92" text-anchor="middle">histórico + system prompt</text>
+              <text x="335" y="114" text-anchor="middle" opacity=".65">+ schema das 10 tools</text>
+
+              <g class="svg-accent">
+                <line x1="430" y1="152" x2="635" y2="152" stroke="currentColor" stroke-width="2" marker-end="url(#ar2)"/>
+                <text x="533" y="144" text-anchor="middle" font-weight="600">tool_rag("bagagem platinum")</text>
+                <text x="533" y="166" text-anchor="middle" opacity=".75">embed_query + 2 SELECT</text>
+              </g>
+
+              <line x1="640" y1="200" x2="435" y2="200" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ar2)"/>
+              <text x="537" y="192" text-anchor="middle">até 7 trechos [Fonte: ...]</text>
+
+              <line x1="430" y1="248" x2="250" y2="248" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ar2)"/>
+              <text x="340" y="240" text-anchor="middle">tokens da resposta</text>
+
+              <line x1="245" y1="296" x2="65" y2="296" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ar2)"/>
+              <text x="155" y="288" text-anchor="middle">data: {...}\n\n</text>
+              <text x="155" y="310" text-anchor="middle" opacity=".65">um evento por token</text>
+
+              <line x1="245" y1="348" x2="65" y2="348" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#ar2)"/>
+              <text x="155" y="340" text-anchor="middle">data: [DONE]</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>O passo destacado é o único que alguém escreveu à mão neste projeto. Todo o resto — decidir chamar a ferramenta, encaixar o resultado no contexto, voltar ao modelo — é o loop do LangGraph que o <code>create_deep_agent</code> montou.</figcaption>
+      </figure>
+
+      <p>Repare no que <em>não</em> existe: não há <code>if "cartao" in pergunta</code> em lugar nenhum. Quem decide chamar a ferramenta é o modelo, com base na docstring e no system prompt. É a diferença entre um chatbot com regras e um agente.</p>
+      <div class="callout trap">
+        <span class="label">Custo escondido</span>
+        <p>Toda chamada de <code>tool_rag</code> gera um <code>embed_query</code> — uma ida à API de embeddings antes de qualquer SQL. Nesse tipo de pipeline, o embedding da pergunta costuma dominar a latência da busca com folga sobre o tempo de banco. Se um dia você for otimizar, olhe para cache/warmup do embedding antes de mexer no SQL.</p>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section id="memoria">
+      <h2>As três memórias</h2>
+      <p class="lede">"O agente lembra de mim?" depende de qual memória e de qual entrada. Esta tabela resolve a maior parte da confusão.</p>
+      <div class="tw">
+        <table>
+          <thead>
+            <tr><th>Camada</th><th>Onde mora</th><th>Dura</th><th>Ativa no server.py?</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Histórico da conversa</strong></td>
+              <td>No cliente — a UI reenvia tudo a cada requisição</td>
+              <td>Enquanto a aba viver</td>
+              <td><strong>Sim</strong> — é a única ativa</td>
+            </tr>
+            <tr>
+              <td><strong>Checkpointer</strong><br><code>PostgresSaver</code></td>
+              <td>Postgres, indexado por <code>thread_id</code></td>
+              <td>Permanente, por conversa</td>
+              <td>Não — só com <code>persistente=True</code></td>
+            </tr>
+            <tr>
+              <td><strong>Store</strong><br><code>PostgresStore</code></td>
+              <td>Postgres, namespace <code>memories</code></td>
+              <td>Permanente, atravessa conversas</td>
+              <td>Não — só com <code>persistente=True</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Por isso o <code>server.py</code> gera um <code>thread_id</code> novo a cada requisição: sem checkpointer, o id não guarda nada mesmo — é só um campo obrigatório da config. O comentário no topo do arquivo diz isso com todas as letras: <em>"a UI manda o historico completo a cada requisicao, entao o backend e stateless"</em>.</p>
+      <p>Teste você mesmo: pergunte sobre o Platinum e em seguida só "e no Gold?". <strong>Funciona</strong>, porque o histórico veio junto na requisição. Agora recarregue a página e repita a segunda pergunta sozinha — o agente não faz ideia do que você está falando.</p>
+      <div class="callout">
+        <span class="label">Como ligar memória de verdade</span>
+        <p>O próprio README aponta o caminho: derive o <code>thread_id</code> da sessão do usuário em vez de sortear um <code>uuid</code>, e construa o agente com <code>persistente=True</code>. A partir daí o checkpointer assume e o histórico deixa de depender do cliente.</p>
+      </div>
+    </section>
+
+    <!-- ============ 7 ============ -->
+    <section id="gradio">
+      <h2>app.py, o atalho</h2>
+      <p class="lede">A mesma inteligência, sem Node, em 38 linhas.</p>
+      <p>Usa <code>gr.ChatInterface</code> com uma função geradora que acumula os tokens e faz <code>yield</code> do texto parcial — é assim que o Gradio desenha o streaming. E constrói o agente com <code>persistente=True</code>, então esta entrada <em>tem</em> checkpointer e store.</p>
+      <p>É o caminho mais rápido para ver o agente funcionando: <code>python app.py</code> e abra <code>:7860</code>. Também é o que o notebook usa no Colab, com <code>share=True</code> para gerar um link público.</p>
+      <div class="callout trap">
+        <span class="label">Não use como está para vários usuários</span>
+        <p>O <code>thread_id</code> é a string fixa <code>"web"</code>. Todo mundo que abrir a mesma instância cai na <strong>mesma thread</strong>, com o mesmo histórico e a mesma memória de longo prazo. Sozinho na sua máquina, tudo bem; num link compartilhado, uma pessoa vê a conversa da outra.</p>
+      </div>
+    </section>
+
+    <!-- ============ 8 ============ -->
+    <section id="ui">
+      <h2>A UI: um starter e um arquivo seu</h2>
+      <p class="lede">São ~4.150 linhas de componentes em <code>ui/</code>, e você não precisa entender quase nenhuma.</p>
+      <p>A pasta veio de <code>npx assistant-ui@latest create</code>, praticamente intocada — o <code>&lt;title&gt;</code> ainda é "assistant-ui Starter App". A pilha: Next.js 16 (App Router, Turbopack), React 19, Tailwind 4, componentes shadcn/ui sobre <code>@base-ui/react</code>, e o Vercel AI SDK v7 fazendo a ponte.</p>
+      <p><strong>O único arquivo realmente do projeto</strong> é <code>ui/app/api/chat/route.ts</code>, e ele cabe em meia tela:</p>
+<pre><code>const agente = createOpenAI({
+  baseURL: process.env.AGENT_API_URL ?? "http://localhost:18080/v1",
+  apiKey:  process.env.AGENT_API_KEY ?? "sk-local-nao-usado",
+});
+
+const result = streamText({
+  model: agente.chat("nara"),
+  messages: await convertToModelMessages(messages),
+});</code></pre>
+      <p>É o cliente oficial da OpenAI apontado para outro <code>baseURL</code>. A chave é decorativa — o backend não valida nada. E <code>.chat(...)</code> é deliberado: força o AI SDK a usar <code>/v1/chat/completions</code> em vez da Responses API, que o <code>server.py</code> não implementa.</p>
+      <div class="callout">
+        <span class="label">Por que essa rota existe?</span>
+        <p>Ela roda no servidor do Next, não no navegador. Assim a URL e a credencial do backend nunca chegam ao cliente — e em produção o <code>AGENT_API_URL</code> pode apontar para um endereço interno do cluster (<code>http://agent-api:8000/v1</code>), inalcançável de fora. É o que o <code>k8s/frontend.yaml</code> faz.</p>
+      </div>
+      <p>Existe uma segunda versão desse arquivo em <code>app/frontend/route.ts</code>, que é a de referência do curso. Ela usa a API mais antiga do SDK (<code>createUIMessageStreamResponse</code>) e aponta para a porta 8000. A que roda é a de <code>ui/</code>.</p>
+    </section>
+
+    <!-- ============ 9 ============ -->
+    <section id="infra">
+      <h2>Infra e CI/CD</h2>
+
+      <h3>Docker</h3>
+      <p>O <code>Dockerfile</code> é o mínimo: <code>python:3.12-slim</code>, instala o <code>requirements.txt</code>, copia o código, roda uvicorn. Sem multi-stage e sem usuário não-root — didático, mas não é o que se leva para produção.</p>
+      <p>No <code>docker-compose.yml</code> há duas decisões que valem entender:</p>
+      <ul>
+        <li>O Postgres <strong>não publica porta no host</strong>. O <code>agent-api</code> chega nele pela rede interna, como <code>db:5432</code>. Menos superfície exposta.</li>
+        <li>A pasta <code>./documentos</code> é montada como volume, então dá para trocar os PDFs sem rebuildar a imagem — desde que você limpe a base, pelo motivo da idempotência.</li>
+      </ul>
+
+      <h3>Kubernetes</h3>
+      <p>Cinco manifests, e dois detalhes que ensinam algo:</p>
+      <ul>
+        <li>O <code>readinessProbe</code> bate em <code>/v1/models</code> com <code>initialDelaySeconds: 30</code> — margem para a ingestão que roda no boot.</li>
+        <li>O Ingress tem <code>proxy-read-timeout: 3600</code>. Streaming é uma conexão longa; com o timeout padrão do nginx a resposta seria cortada no meio. É a pegadinha clássica de colocar chat com SSE atrás de proxy.</li>
+      </ul>
+
+      <h3>GitHub Actions</h3>
+      <p><code>ci.yml</code> compila os três arquivos Python, roda <code>ruff</code> e builda a imagem. <code>deploy.yml</code> dispara em tags <code>v*</code>: publica no GHCR, aplica os manifests e faz <code>kubectl set image</code> + <code>rollout status</code>.</p>
+      <div class="callout trap">
+        <span class="label">O lint não reprova</span>
+        <p>A linha é <code>ruff check . || true</code>. O <code>|| true</code> engole a falha: o job fica verde mesmo com o código sujo. Se você usar esse CI como base, é a primeira linha a corrigir.</p>
+      </div>
+    </section>
+
+    <!-- ============ 10 ============ -->
+    <section id="notebook">
+      <h2>O notebook, e onde ele difere</h2>
+      <p class="lede">28 células em três partes: rodar no Colab, empacotar o app, hospedar.</p>
+      <p>A Parte B usa <code>%%writefile</code> para <em>gerar</em> os arquivos do projeto — é como a pasta <code>app/</code> nasce. Por isso o notebook e o repositório são duas versões da mesma coisa, e há diferenças reais entre o protótipo da Parte A e o app final:</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Aspecto</th><th>Notebook (Parte A)</th><th>App (agent_core.py)</th></tr></thead>
+          <tbody>
+            <tr><td>Tabela</td><td><code>DROP TABLE</code> e recria sempre</td><td><code>CREATE IF NOT EXISTS</code>, pula se populada</td></tr>
+            <tr><td>Índice vetorial</td><td><strong>Cria índice HNSW</strong></td><td><strong>Nenhum índice</strong></td></tr>
+            <tr><td>Coluna <code>source</code></td><td>Não existe</td><td>Existe, alimenta as citações</td></tr>
+            <tr><td>Busca</td><td>Só vetorial, <code>LIMIT 3</code></td><td>Vetorial + lexical, até 7</td></tr>
+            <tr><td>Todos os PDFs</td><td>Concatenados num texto só</td><td>Um por vez, preservando a fonte</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>A diferença do índice merece atenção. Sem índice, o pgvector faz varredura sequencial e calcula distância contra <em>todos</em> os chunks. Com 180 chunks isso é imperceptível. A partir de dezenas de milhares, passa a doer — e aí o <code>CREATE INDEX ... USING hnsw</code> que está no notebook precisa voltar para o app.</p>
+    </section>
+
+    <!-- ============ 11 ============ -->
+    <section id="experimentos">
+      <h2>Experimentos</h2>
+      <p class="lede">Com o projeto rodando, estas cinco perguntas mostram cada comportamento do agente separadamente. Faça na ordem.</p>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th>Pergunte</th><th>Observe</th><th>Por quê</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>"O que o cartão Gold cobre em caso de atraso de voo?"</td>
+              <td>A seção <strong>Fontes:</strong> no fim da resposta</td>
+              <td>Caminho completo do RAG: o modelo chamou a ferramenta e se ancorou nos trechos</td>
+            </tr>
+            <tr>
+              <td>"Monte um roteiro de 5 dias em Lisboa"</td>
+              <td>Nenhuma citação de fonte</td>
+              <td>Conhecimento geral do modelo — a ferramenta não foi chamada, e está certo</td>
+            </tr>
+            <tr>
+              <td>"Qual a anuidade do cartão Platinum?"</td>
+              <td>Ele admite que não encontrou</td>
+              <td>A informação não está nos PDFs; é a última linha do system prompt agindo</td>
+            </tr>
+            <tr>
+              <td>"Qual a diferença entre o Gold e o Platinum?"</td>
+              <td>As fontes citadas — provavelmente só uma</td>
+              <td>O filtro para no primeiro cartão citado; veja a seção seguinte</td>
+            </tr>
+            <tr>
+              <td>Pergunte do Platinum, depois só "e no Gold?"</td>
+              <td>Ele entende o contexto</td>
+              <td>O histórico veio na requisição. Recarregue a página e repita: não entende mais</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Depois de cada uma, olhe o log do backend com <code>docker compose logs -f agent-api</code>. Ver a requisição chegando enquanto a resposta aparece na tela conecta as duas metades do sistema.</p>
+    </section>
+
+    <!-- ============ 12 ============ -->
+    <section id="receita">
+      <h2>Do exemplo ao seu projeto</h2>
+      <p class="lede">A ordem importa. Cada passo é testável antes do próximo — e os passos 6 e 7 são os dois requisitos que este exemplo não cobre.</p>
+      <ol class="body">
+        <li><strong>Troque os documentos.</strong> Seus arquivos em <code>app/documentos/</code>. Como a base não reingere sozinha, derrube o volume: <code>docker compose down -v</code> e suba de novo.</li>
+        <li><strong>Reescreva o SYSTEM_PROMPT.</strong> Papel, quando chamar a ferramenta (no vocabulário de quem vai perguntar), ancoragem nos trechos, formato da citação e o que fazer quando não souber. As cinco partes.</li>
+        <li><strong>Ajuste a docstring da <code>tool_rag</code>.</strong> É o que o modelo lê para decidir. Descreva o <em>seu</em> corpus.</li>
+        <li><strong>Revise o filtro por fonte.</strong> O bloco <code>["platinum", "gold", "standard"]</code> é específico deste domínio. Se o seu corpus não se divide assim, apague — ou troque pelas categorias reais.</li>
+        <li><strong>Confira as stopwords</strong> da perna lexical: <code>cartao</code>, <code>seguro</code>, <code>cobertura</code> são as palavras genéricas <em>deste</em> domínio. As suas serão outras.</li>
+        <li><strong>Escreva a segunda tool</strong> — obrigatória na entrega. Veja abaixo.</li>
+        <li><strong>Declare um subagente</strong> — obrigatório na entrega. Veja abaixo.</li>
+        <li><strong>Renomeie o modelo</strong> em <code>MODEL_ID</code> (<code>server.py</code>) e no <code>agente.chat("...")</code> do <code>route.ts</code> — os dois têm que combinar, senão a UI pede um modelo que não existe.</li>
+      </ol>
+
+      <h3>Passo 6 — a segunda tool</h3>
+      <p>Uma tool é uma função Python comum. O que a torna utilizável pelo agente são três coisas: <strong>type hints</strong> nos parâmetros, <strong>docstring descritiva</strong> e a inclusão em <code>tools=[...]</code>. Não há decorator obrigatório nem registro em lugar nenhum.</p>
+      <p>Um exemplo que funciona com o schema deste projeto — o agente passa a saber responder "o que você pode consultar?":</p>
+<pre><code>def listar_documentos() -> str:
+    """Lista os documentos disponiveis na base de conhecimento e quantos
+    trechos cada um tem. Use quando o usuario perguntar sobre o que voce
+    pode responder, ou quais fontes voce consulta."""
+    cur = pg().cursor()
+    cur.execute("SELECT source, count(*) FROM chunks GROUP BY source ORDER BY source")
+    linhas = [f"- {fonte}: {n} trechos" for fonte, n in cur.fetchall()]
+    return "\n".join(linhas) if linhas else "A base esta vazia."</code></pre>
+      <p>E o registro, no <code>construir_agente()</code>:</p>
+<pre><code>create_deep_agent(
+    model=modelo,
+    tools=[tool_rag, listar_documentos],   <span class="c"># ← as duas</span>
+    system_prompt=SYSTEM_PROMPT,
+)</code></pre>
+      <p>Escolha a sua segunda tool pelo que ela resolve, não pelo que é fácil: uma que consulte uma API externa, calcule algo que o modelo erraria sozinho, ou consulte metadados da base como esta. Uma tool que só reformata texto é trabalho que o LLM já faz.</p>
+
+      <h3>Passo 7 — o subagente</h3>
+      <p>Um subagente é declarado como um dicionário. Três campos são obrigatórios — <code>name</code>, <code>description</code> e <code>system_prompt</code> — e <code>tools</code> é opcional (se você omitir, ele herda as do agente principal):</p>
+<pre><code>pesquisador = {
+    "name": "pesquisador",
+    "description": (
+        "Investiga um tema a fundo na base, cruzando varios documentos. "
+        "Use quando a pergunta exigir comparar fontes ou reunir informacao "
+        "espalhada, em vez de uma consulta pontual."
+    ),
+    "system_prompt": (
+        "Voce pesquisa na base de conhecimento. Faca quantas buscas forem "
+        "necessarias com a tool_rag, uma por subtema. Devolva um resumo "
+        "objetivo, sempre citando as fontes de cada afirmacao."
+    ),
+    "tools": [tool_rag],
+}
+
+create_deep_agent(
+    model=modelo,
+    tools=[tool_rag, listar_documentos],
+    system_prompt=SYSTEM_PROMPT,
+    subagents=[pesquisador],               <span class="c"># ← delegação hierárquica</span>
+)</code></pre>
+      <p>O agente principal aciona o subagente pela ferramenta <code>task</code>, que — como você viu na <a href="#gratis">seção das dez ferramentas</a> — já estava disponível o tempo todo. Quem decide delegar é o modelo, lendo a <code>description</code>. É o mesmo mecanismo da <code>tool_rag</code>: <strong>a descrição é a interface</strong>.</p>
+      <p>Por que isso vale a pena, e não é só requisito: o subagente roda com <strong>contexto isolado</strong>. Ele pode fazer seis buscas, ler trechos longos e descartar o que não serve, devolvendo só o resumo ao agente principal. O contexto do chat não incha com o material bruto da pesquisa.</p>
+      <div class="callout trap">
+        <span class="label">Efeito colateral que você vai ver</span>
+        <p>Assim que houver subagente, o <code>server.py</code> passa a transmitir <em>também</em> os tokens dele — o filtro do streaming captura qualquer <code>AIMessageChunk</code> do grafo, venha de onde vier. Na prática, o raciocínio interno do subagente pode aparecer no chat. Se acontecer, não é bug do seu subagente: é o filtro em <code>server.py</code> que precisa distinguir a origem do token.</p>
+      </div>
+
+      <h3>Sobre o README da entrega</h3>
+      <p>Três coisas são pedidas explicitamente, e as duas últimas são as que costumam ficar para a última hora:</p>
+      <ul>
+        <li><strong>Setup</strong> — <code>.env</code>, <code>docker compose up</code>, como rodar. A <a href="#rodar">primeira seção deste guia</a> serve de modelo; confira a porta que o <em>seu</em> compose publica.</li>
+        <li><strong>3 perguntas-teste com resposta esperada</strong> — escolha perguntas que exercitem caminhos <em>diferentes</em>: uma que force o RAG, uma que o agente deva responder sem buscar, e uma cuja resposta correta seja "não encontrei na base". Um trio que só testa o caminho feliz não mostra nada.</li>
+        <li><strong>Caso de uso e limitações conhecidas</strong> — o que o agente resolve, para quem, e onde ele falha. Seja específico: "não compara dois documentos na mesma pergunta" vale mais que "pode conter imprecisões".</li>
+      </ul>
+      <div class="callout trap">
+        <span class="label">O passo que quebra silenciosamente</span>
+        <p>Se você trocar <code>MODELO_EMBED</code> por <code>text-embedding-3-large</code>, os vetores passam a ter 3072 dimensões e a tabela está declarada como <code>vector(1536)</code>, com o número escrito à mão no SQL. O erro aparece só na ingestão, e não é óbvio. Trocar o modelo de embedding exige mudar o <code>CREATE TABLE</code> <em>e</em> reingerir tudo.</p>
+      </div>
+    </section>
+
+    <!-- ============ 13 ============ -->
+    <section id="duvidas">
+      <h2>Perguntas frequentes</h2>
+
+      <div class="qa">
+        <details>
+          <summary>Onde está o loop do agente? Não vejo <code>while</code> nenhum.</summary>
+          <div class="answer">
+            <p>Não existe no código do projeto. O <code>create_deep_agent</code> devolve um grafo LangGraph compilado com dois nós principais, <code>model</code> e <code>tools</code>, e a aresta condicional entre eles: o modelo responde ou pede uma ferramenta; se pedir, o grafo executa e volta ao modelo. O loop é o grafo.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Como o modelo sabe que deve chamar a <code>tool_rag</code>?</summary>
+          <div class="answer">
+            <p>Por duas vias que se somam. A LangChain converte a assinatura e a docstring da função num schema de ferramenta enviado ao modelo em toda requisição — é o canal principal. E o system prompt reforça com uma regra explícita ("SEMPRE chame antes de responder"). Sem a docstring, o modelo teria só o nome da função para adivinhar.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Qual a diferença entre isso e o <code>create_agent</code> da LangChain?</summary>
+          <div class="answer">
+            <p>O DeepAgents é uma camada acima. Ele monta o mesmo tipo de grafo, mas já embute o <em>harness</em>: filesystem virtual (7 ferramentas), delegação a subagentes (<code>task</code>), planejamento, e ganchos para skills, memória e permissões. Com <code>create_agent</code> você teria a sua ferramenta e mais nada — o que às vezes é exatamente o que se quer.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Por que não usar <code>langgraph dev</code> ou a LangGraph Platform?</summary>
+          <div class="answer">
+            <p>Porque aí a UI precisaria falar o protocolo da LangGraph. Expondo o formato da OpenAI, qualquer cliente pronto conecta sem adaptador — e a interface vira uma decisão descartável. Esse é o argumento central do projeto.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Dá para trocar o pgvector por outro banco vetorial?</summary>
+          <div class="answer">
+            <p>Sim, e o impacto é pequeno: <code>preparar_base()</code> e <code>tool_rag()</code> mudam, o resto fica igual. A ferramenta é uma função que recebe uma string e devolve uma string — o agente não sabe o que tem atrás dela.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Como faço aprovação humana antes de uma ação perigosa?</summary>
+          <div class="answer">
+            <p>Parâmetro <code>interrupt_on</code> do <code>create_deep_agent</code>. Ele pausa a execução antes das ferramentas que você listar e devolve o controle a quem chamou. Como este projeto só tem uma ferramenta de leitura, não há uso aqui — mas é o gancho certo para quando o seu agente escrever em algum lugar.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>E multi-agente?</summary>
+          <div class="answer">
+            <p>Parâmetro <code>subagents=[...]</code>, com o formato completo no <a href="#receita">passo 7 da receita</a> — é requisito da entrega. Cada subagente roda com contexto isolado e é acionado pela ferramenta <code>task</code>, que já está disponível.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Quanto custa cada pergunta?</summary>
+          <div class="answer">
+            <p>Uma chamada de embedding por invocação da <code>tool_rag</code> (barata) mais a geração do modelo (o grosso). A ingestão é paga uma vez: a base documental é indexada no PostgreSQL. Perguntas sobre NetBox que não acionam a ferramenta não geram embedding nenhum.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Por que <code>temperature=0</code>?</summary>
+          <div class="answer">
+            <p>Para RAG interessa reprodutibilidade e fidelidade ao trecho recuperado, não variedade. Com temperatura 0 a mesma pergunta tende a produzir a mesma resposta, o que também torna o comportamento avaliável — dá para rodar um conjunto de perguntas de referência e comparar.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>A API tem autenticação?</summary>
+          <div class="answer">
+            <p>Não. O <code>server.py</code> aceita qualquer requisição; a <code>apiKey</code> do <code>route.ts</code> é ignorada. Rodando local, tudo bem. Exposto na rede, não — qualquer um que alcance a porta gasta a sua chave do Foundry. Antes de publicar: autenticação, rate limiting e HTTPS.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Por que o agente às vezes responde sem citar fontes?</summary>
+          <div class="answer">
+            <p>Porque não chamou a ferramenta — e nem sempre deveria. "Monte um roteiro de 5 dias em Lisboa" é conhecimento geral do modelo. A seção <em>Fontes</em> só aparece quando houve busca, que é o comportamento pedido pelo prompt.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary>Como sei se ele buscou mesmo, ou está inventando?</summary>
+          <div class="answer">
+            <p>Três sinais, do mais fraco ao mais forte: a seção <em>Fontes</em> no fim da resposta; o log do container (<code>docker compose logs -f agent-api</code>); e — o definitivo — instrumentar com tracing (Langfuse) para ver a chamada de ferramenta, os argumentos e o texto recuperado. Este projeto ainda não tem tracing: é uma boa primeira extensão para você implementar.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- ============ 14 ============ -->
+    <section id="armadilhas">
+      <h2>O que costuma quebrar</h2>
+      <p class="lede">Pontos frágeis reais do código. Ler esta lista antes economiza uma tarde de depuração.</p>
+
+      <div class="trap-item">
+        <span class="sev now">no seu dia 1</span>
+        <div>
+          <h4>O README aponta para a porta errada</h4>
+          <p>O README e o <code>frontend/.env.local.example</code> dizem que o backend fica em <code>localhost:8000</code>. O <code>docker-compose.yml</code> publica <code>18080:8000</code>. Quem segue a documentação configura 8000 e não conecta.</p>
+          <p class="fixline"><b>→</b> o valor correto é o que está em <code>ui/.env.local</code>: <code>AGENT_API_URL=http://localhost:18080/v1</code></p>
+        </div>
+      </div>
+
+      <div class="trap-item">
+        <span class="sev now">no seu dia 1</span>
+        <div>
+          <h4>Trocar os PDFs não muda as respostas</h4>
+          <p>A ingestão só roda com a tabela vazia. Novos documentos na pasta são ignorados enquanto houver qualquer chunk antigo — e o agente continua respondendo com segurança total sobre o corpus errado.</p>
+          <p class="fixline"><b>→</b> <code>docker compose down -v</code> antes de subir com o corpus novo</p>
+        </div>
+      </div>
+
+      <div class="trap-item">
+        <span class="sev now">no seu dia 1</span>
+        <div>
+          <h4>Comparação entre dois cartões sai enviesada</h4>
+          <p>O filtro de fonte percorre <code>["platinum", "gold", "standard"]</code> e para no primeiro que aparecer na pergunta. "Qual a diferença entre Gold e Platinum?" fixa em Platinum e busca só nesse documento — a comparação nasce sem metade dos dados.</p>
+          <p class="fixline"><b>→</b> pergunte um cartão por vez, ou reescreva o filtro para coletar todas as fontes citadas</p>
+        </div>
+      </div>
+
+      <div class="trap-item">
+        <span class="sev soon">antes de produção</span>
+        <div>
+          <h4>Sem índice vetorial</h4>
+          <p>A tabela não tem índice; toda busca é varredura sequencial. Invisível com 180 chunks, custoso em escala. O notebook do curso cria HNSW — o app perdeu isso no caminho.</p>
+          <p class="fixline"><b>→</b> <code>CREATE INDEX ON chunks USING hnsw (embedding vector_cosine_ops);</code></p>
+        </div>
+      </div>
+
+      <div class="trap-item">
+        <span class="sev soon">antes de produção</span>
+        <div>
+          <h4>Dimensão 1536 escrita à mão</h4>
+          <p>O <code>CREATE TABLE</code> fixa <code>vector(1536)</code>, casado com o <code>text-embedding-3-small</code>. Trocar o modelo de embedding por variável de ambiente não atualiza o schema.</p>
+          <p class="fixline"><b>→</b> derive a dimensão do modelo, ou trate os dois como um par que muda junto</p>
+        </div>
+      </div>
+
+      <div class="trap-item">
+        <span class="sev soon">antes de produção</span>
+        <div>
+          <h4>Sem autenticação, e com senha padrão no banco</h4>
+          <p>A API aceita qualquer requisição. O Postgres usa <code>postgres/postgres</code> no compose e no manifest do Kubernetes, este último com a senha em texto claro no YAML.</p>
+          <p class="fixline"><b>→</b> auth + rate limiting na API; senha do banco via Secret, como o <code>secret.example.yaml</code> já ensina para as outras variáveis</p>
+        </div>
+      </div>
+
+      <div class="trap-item">
+        <span class="sev soon">antes de produção</span>
+        <div>
+          <h4>Uma conexão global com endpoints síncronos</h4>
+          <p><code>pg()</code> devolve sempre a mesma conexão, e os endpoints do FastAPI são <code>def</code> (não <code>async def</code>), então rodam num pool de threads. Várias requisições simultâneas compartilham o mesmo cursor de banco. Com um usuário só não dá problema, mas é o desenho que costuma falhar sob concorrência.</p>
+          <p class="fixline"><b>→</b> pool de conexões (<code>psycopg_pool</code>) em vez de uma conexão de módulo</p>
+        </div>
+      </div>
+
+      <div class="trap-item">
+        <span class="sev note">de olho</span>
+        <div>
+          <h4>O CI não reprova nada</h4>
+          <p><code>ruff check . || true</code> — o lint roda, mostra os problemas e sai com sucesso de qualquer jeito.</p>
+          <p class="fixline"><b>→</b> remova o <code>|| true</code> quando o código estiver limpo</p>
+        </div>
+      </div>
+
+      <div class="trap-item">
+        <span class="sev note">de olho</span>
+        <div>
+          <h4>A UI ainda se apresenta como starter</h4>
+          <p>Título da aba "assistant-ui Starter App" e um breadcrumb no cabeçalho que linka para a documentação do assistant-ui.</p>
+          <p class="fixline"><b>→</b> <code>metadata</code> em <code>ui/app/layout.tsx</code> e o cabeçalho em <code>ui/app/assistant.tsx</code></p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Este guia acompanha o código em <code>app/</code> e descreve o projeto como ele está: backend em <code>:18080</code>, UI em <code>:3000</code> (ou a próxima porta livre), com documentação Markdown indexada em PostgreSQL + pgvector. As versões de biblioteca, a lista de ferramentas do agente e o formato do subagente foram lidos da biblioteca instalada no container, não da documentação — se você atualizar as dependências, confira se ainda batem.</p>
+  </footer>
+
+</div>
